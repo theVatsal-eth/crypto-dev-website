@@ -1,10 +1,11 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import Web3Modal from "web3modal";
+import Web3Modal, {} from "web3modal";
 import { Contract, providers, utils } from "ethers";
 import { abi, NFT_CONTRACT_ADDRESS } from "../constants";
 import {  useEffect, useRef, useState } from 'react'
 import Core from 'web3modal';
+import { NFTProvider, NFTSigner } from '../utils/Interfaces';
 
 const Home: NextPage = () => {
 
@@ -195,9 +196,9 @@ const Home: NextPage = () => {
     }
   }
 
-  const getProviderOrSigner = async (needSigner: boolean = false): Promise<providers.Web3Provider | providers.JsonRpcSigner> => {
+  const getProviderOrSigner = async (needSigner: boolean = false): Promise< NFTProvider | NFTSigner> => {
     
-    const provider = await web3ModalRef.current.connect()
+    const provider = await web3ModalRef.current?.connect()
     const web3Provider = new providers.Web3Provider(provider)
 
     const { chainId } = await web3Provider.getNetwork()
@@ -208,12 +209,12 @@ const Home: NextPage = () => {
     }
 
     if (needSigner) {
-      const signer = await web3Provider.getSigner(0)
+      const signer = await web3Provider.getSigner() as NFTSigner;
       console.log(signer)
       return signer;
     }
 
-    return web3Provider;
+    return web3Provider as NFTProvider;
 
   }
 
@@ -227,7 +228,7 @@ const Home: NextPage = () => {
         cacheProvider: true
       })
     }
-
+    console.log(web3ModalRef.current)
     connectWallet();
 
     const checker= async () => {
@@ -334,7 +335,7 @@ const Home: NextPage = () => {
           {renderButton()}
         </div>
         <div>
-          <img src='./cryptodevs/4.svg' alt='' />
+          <img src='./cryptodevs/5.svg' alt='' />
         </div>
       </div>
 
