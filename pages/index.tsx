@@ -1,10 +1,9 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import Image from 'next/image'
 import Web3Modal from "web3modal";
 import { Contract, providers, utils } from "ethers";
 import { abi, NFT_CONTRACT_ADDRESS } from "../constants";
-import { MutableRefObject, useEffect, useRef, useState } from 'react'
+import {  useEffect, useRef, useState } from 'react'
 import Core from 'web3modal';
 
 const Home: NextPage = () => {
@@ -15,7 +14,12 @@ const Home: NextPage = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [tokenIdsMinted, setTokenIdsMinted] = useState<string>("0");
-  const web3ModalRef: MutableRefObject<Core | undefined> = useRef();
+  const web3ModalRef = useRef<Core>();
+
+  console.log(presaleStarted, "presale check")
+  console.log(tokenIdsMinted, "Minted Tokens")
+  console.log(isOwner, "isOwner")
+
 
   const presaleMint = async (): Promise<void> => {
     try {
@@ -34,9 +38,9 @@ const Home: NextPage = () => {
       setLoading(true)
       await tx.wait()
       setLoading(false)
-      window.alert("You successfully minted a Crypto Dev!")
+      window.alert("You successfully minted a Crypto Dev in Presale Minting!")
     } catch (err) {
-      console.error(err)
+      console.error(err, "in presaleMint")
     }
   }
 
@@ -58,9 +62,9 @@ const Home: NextPage = () => {
       setLoading(true)
       await tx.wait()
       setLoading(false)
-      window.alert("You succesfully minted a Crypto Dev!")
+      window.alert("You succesfully minted a Crypto Dev in Public Minting!")
     } catch (err) {
-      console.error(err)
+      console.error(err, "in publicMint")
     }
   }
 
@@ -71,7 +75,7 @@ const Home: NextPage = () => {
       setWalletConnected(true);
 
     } catch (err) {
-      console.error(err)
+      console.error(err, "in connectWallet")
     }
   } 
 
@@ -93,7 +97,7 @@ const Home: NextPage = () => {
 
       await checkIfPresaleStarted();
     } catch (err) {
-      console.error(err);
+      console.error(err, "in startPresale");
     }
   };
 
@@ -108,18 +112,18 @@ const Home: NextPage = () => {
       )
 
       const _presaleStarted: boolean = await nftContract.presaleStarted()
-      if (_presaleStarted) {
+      if (!_presaleStarted) {
         await getOwner()
       }
-      setPresaleStarted(true)
+      setPresaleStarted(_presaleStarted)
       return _presaleStarted;
 
     } catch (err) {
-      console.error(err)
+      console.error(err, "in checkIfPresaleStarted")
       return false;
     }
   }
-
+  
   const checkIfPresaleEnded = async ():Promise<boolean> => {
     try {
 
@@ -135,6 +139,7 @@ const Home: NextPage = () => {
       const hasEnded: boolean = _preSaleEnded.lt(Math.floor(Date.now() / 1000))
       if (hasEnded) {
         setPresaleEnded(true);
+        // setPresaleStarted(false)
       } else {
         setPresaleEnded(false)
       }
@@ -142,7 +147,7 @@ const Home: NextPage = () => {
       return hasEnded;
 
     } catch (err) {
-      console.error(err)
+      console.error(err, "inCheckIfPresaleEnded")
       return false;
     }
   }
@@ -159,13 +164,15 @@ const Home: NextPage = () => {
       const _owner = await nftContract.owner()
 
       const signer = await getProviderOrSigner(true)
+      console.log(signer, "in getOwner")
       const address = await signer.getAddress()
+      console.log("in getOwner")
       if(address.toLowerCase() === _owner.toLowerCase()) {
+        console.log("checking for owner")
         setIsOwner(true)
       } 
-
     } catch (err) {
-      console.error(err)
+      console.error(err, "in getOwner")
     }
   }
 
@@ -184,7 +191,7 @@ const Home: NextPage = () => {
       setTokenIdsMinted(_tokenIds.toString())
 
     } catch (err) {
-      console.error(err)
+      console.error(err, "in getTokenIdsMinted")
     }
   }
 
@@ -201,8 +208,9 @@ const Home: NextPage = () => {
     }
 
     if (needSigner) {
-      const signer = web3Provider.getSigner()
-      return signer
+      const signer = await web3Provider.getSigner(0)
+      console.log(signer)
+      return signer;
     }
 
     return web3Provider;
@@ -216,6 +224,7 @@ const Home: NextPage = () => {
         network: "goerli",
         providerOptions: {},
         disableInjectedProvider: false,
+        cacheProvider: true
       })
     }
 
@@ -276,12 +285,12 @@ const Home: NextPage = () => {
     if (!presaleStarted) {
       return (
         <div>
-          <div className='font-bold text-lg text-yellow-400'>Presale hasn not started yet :(</div>
+          <div className='font-bold text-lg text-yellow-400'>Presale has not started yet :(</div>
         </div>
       )
     }
 
-    if (!presaleStarted && !presaleEnded) {
+    if (presaleStarted && !presaleEnded) {
       return (
         <div className=''>
           <div className='font-medium'>
@@ -294,7 +303,7 @@ const Home: NextPage = () => {
         </div>
       )
     }
-
+    console.log(presaleEnded, "presaleend check")
     if (presaleStarted && presaleEnded) {
       return (
         <button className='mt-3 text-lg font-semibold border-none rounded-md p-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500' onClick={publicMint}>
